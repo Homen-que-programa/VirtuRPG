@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;500&display=swap');
+
+body {
+  background-color: #2f2b2b;
+  color: #f5f0e6;
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.home-logoff {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #3f3124;
+  color: #f5f0e6;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+  border-bottom: 2px solid #a87c4c;
+}
+
+.header h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 2rem;
+  margin: 0;
+}
+
+nav a {
+  color: #f5f0e6;
+  text-decoration: none;
+  margin-left: 2rem;
+  font-weight: 500;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+nav a:hover {
+  color: #ffcc00;
+  transform: scale(1.05);
+}
+
+.intro, .funcionalidades {
+  margin-top: 20px;
+}
+
+.intro h2, .funcionalidades h2 {
+  color: #e7cc96;
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+ul li {
+  margin-bottom: 10px;
+}
+
+ul li strong {
+  font-weight: bold;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 0.875rem;
+}

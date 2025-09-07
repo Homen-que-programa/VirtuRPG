@@ -1,0 +1,57 @@
+body {
+  margin: 0;
+  font-family: "Merriweather", serif; /* fonte medieval elegante */
+  background-color: #2f2b2b; /* cor escura base */
+  color: #f5f0e6; /* cor clara para contraste */
+}
+
+/* Container central */
+.home-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px 25px;
+}
+
+/* Títulos */
+h1, h2 {
+  text-align: center;
+  font-weight: 700;
+  color: #e2c08d; /* dourado pergaminho */
+  margin-bottom: 25px;
+}
+
+/* Mensagem de vazio */
+.empty-msg {
+  text-align: center;
+  font-style: italic;
+  color: #b7a58b;
+}
+
+/* Botão criar campanha */
+.create-btn {
+  display: block;
+  margin: 0 auto 30px;
+  background-color: #5b3e1a; /* marrom madeira */
+  color: #f5f0e6;
+  border: 2px solid #a87c4c; /* dourado leve */
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.create-btn:hover {
+  background-color: #6f4a23;
+  border-color: #d4b87a;
+  transform: translateY(-2px);
+}
+
+/* Lista de campanhas */
+.campaigns-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

@@ -1,0 +1,86 @@
+/* Container geral */
+.campanhas-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px 25px;
+}
+
+/* Título principal */
+.campanhas-container h2 {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 2rem;
+  color: #e2c08d; /* dourado pergaminho */
+  margin-bottom: 30px;
+}
+
+/* Lista de cards */
+.campanhas-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Card individual */
+.campanha-card {
+  background-color: #3f3124; /* marrom escuro */
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  border: 2px solid #a87c4c; /* dourado leve */
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.campanha-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+}
+
+/* Título e descrição do card */
+.campanha-card h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  margin: 0 0 10px;
+  color: #e2c08d;
+}
+
+.campanha-card p {
+  margin: 5px 0;
+  color: #f5f0e6;
+  font-size: 0.95rem;
+}
+
+/* Botão de entrar na campanha */
+.campanha-card button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  background-color: #5b3e1a; /* marrom madeira */
+  color: #f5f0e6;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.campanha-card button:hover {
+  background-color: #6f4a23;
+  border-color: #d4b87a;
+  transform: translateY(-2px);
+}
+
+.campanha-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Mensagem quando não há campanhas */
+.empty-msg {
+  text-align: center;
+  font-style: italic;
+  color: #b7a58b;
+  margin-top: 20px;
+}

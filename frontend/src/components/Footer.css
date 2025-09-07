@@ -1,0 +1,22 @@
+.footer {
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+  padding: 15px;
+  background-color: #3f3124;
+  border-top: 2px solid #a87c4c;
+  margin-top: auto;
+  font-family: 'Roboto', sans-serif;
+  color: #f5f0e6;
+}
+
+.links-footer a {
+  color: #f5f0e6;
+  text-decoration: none;
+  margin: 0 10px;
+  transition: color 0.3s;
+}
+
+.links-footer a:hover {
+  color: #ffcc00;
+}

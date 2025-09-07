@@ -1,0 +1,138 @@
+/* Container geral da página */
+.pagina-campanha-container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Roboto', sans-serif;
+  background-color: rgb(43, 33, 33);
+  color: #f5f0e6;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar-campanha {
+  width: 220px;
+  background-color: #2b1e1e;
+  padding: 20px;
+  border-right: 1px solid #5a4a3a;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-campanha h3 {
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  font-family: 'Cinzel', serif;
+  color: #e2c08d;
+  text-align: center;
+}
+
+.sidebar-campanha ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.sidebar-campanha li {
+  padding: 12px 10px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  color: #f5f0e6;
+  font-weight: 500;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.sidebar-campanha li:hover {
+  background-color: #5b3e1a;
+  border: 1px solid #d4b87a;
+}
+
+.sidebar-campanha li.active {
+  background-color: #6f4a23;
+  border: 1px solid #e2c08d;
+  color: #fff;
+}
+
+/* Conteúdo principal */
+.conteudo-campanha {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  background-color: rgba(43, 33, 33, 0.95);
+  display: flex;
+  flex-direction: column;
+}
+
+.conteudo-campanha section {
+  margin-bottom: 30px;
+  background-color: rgba(40, 30, 30, 0.9);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #5a4a3a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s, background-color 0.3s;
+}
+
+.conteudo-campanha h2,
+.conteudo-campanha h3 {
+  margin-bottom: 15px;
+  color: #e2c08d;
+  font-family: 'Cinzel', serif;
+}
+
+.conteudo-campanha p {
+  color: #f5f0e6;
+  line-height: 1.6;
+}
+
+/* Botões */
+.conteudo-campanha .btn {
+  padding: 10px 20px;
+  background-color: #5b3e1a;
+  color: #f5f0e6;
+  border: 1px solid #a87c4c;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  align-self: flex-start;
+  margin-top: 10px;
+}
+
+.conteudo-campanha .btn:hover {
+  background-color: #6f4a23;
+  border-color: #d4b87a;
+  transform: translateY(-2px);
+}
+
+/* Responsividade */
+@media (max-width: 900px) {
+  .pagina-campanha-container {
+    flex-direction: column;
+  }
+
+  .sidebar-campanha {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar-campanha ul {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .sidebar-campanha li {
+    margin-right: 10px;
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+
+  .conteudo-campanha {
+    padding: 20px;
+  }
+}

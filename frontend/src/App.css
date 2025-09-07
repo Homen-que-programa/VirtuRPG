@@ -1,0 +1,29 @@
+/* Fontes elegantes para RPG medieval */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;500&display=swap');
+
+body {
+  background-color: rgb(43, 33, 33);
+  color: #f5f0e6; /* texto principal mais claro */
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Links globais */
+a {
+  text-decoration: none;
+  color: #f5f0e6;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #ffcc00; /* destaque de hover */
+}
+
+/* Lista de cards */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}

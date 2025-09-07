@@ -1,0 +1,89 @@
+.cadastro-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    background: linear-gradient(135deg, #2b1e1e, #3d2f2f);
+    font-family: 'Cinzel', serif;
+}
+
+.cadastro-box {
+    background-color: rgba(40, 30, 30, 0.95);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    width: 360px;
+    text-align: center;
+}
+
+.cadastro-box h1 {
+    color: #f0e6d2;
+    font-size: 32px;
+    margin-bottom: 5px;
+}
+
+.cadastro-subtitle {
+    color: #d4c4a8;
+    margin-bottom: 25px;
+    font-style: italic;
+}
+
+.cadastro-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #5a4a3a;
+    background-color: #3c2f2f;
+    color: #f0e6d2;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.cadastro-input:focus {
+    border-color: #d4c4a8;
+    box-shadow: 0 0 5px #d4c4a8;
+}
+
+.cadastro-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #8b5e3c;
+    color: #f0e6d2;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.cadastro-button:hover {
+    background-color: #a3734e;
+}
+
+.cadastro-mensagem {
+    color: #ff6b6b;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.cadastro-login-link,
+.login-cadastro-link {
+    margin-top: 15px;
+    color: #d4c4a8;
+    font-size: 14px;
+}
+
+.cadastro-login-link a,
+.login-cadastro-link a {
+    color: #f0e6d2;
+    text-decoration: underline;
+    transition: color 0.3s;
+}
+
+.cadastro-login-link a:hover,
+.login-cadastro-link a:hover {
+    color: #a3734e;
+}

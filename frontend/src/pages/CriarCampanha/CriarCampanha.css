@@ -1,0 +1,76 @@
+.criar-campanha-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    background-color: #2b2623;
+    font-family: "Cinzel", serif;
+    color: #f0e6d2;
+    padding: 20px;
+}
+
+.criar-campanha-container h1 {
+    margin-bottom: 20px;
+    font-size: 28px;
+}
+
+.criar-campanha-container .mensagem {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #d4c4a8;
+    text-align: center;
+}
+
+.criar-campanha-container input,
+.criar-campanha-container textarea {
+    width: 100%;
+    max-width: 500px;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+    background-color: #3a2f2b;
+    color: #f0e6d2;
+    font-size: 14px;
+    font-family: "Cinzel", serif;
+}
+
+.criar-campanha-container input::placeholder,
+.criar-campanha-container textarea::placeholder {
+    color: #d4c4a8;
+}
+
+.criar-campanha-container textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.criar-campanha-container .acoes {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.criar-campanha-container .btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    background-color: #8b5e3c;
+    color: #f0e6d2;
+}
+
+.criar-campanha-container .btn:hover {
+    background-color: #a06e4b;
+}
+
+.criar-campanha-container .btn-logout {
+    background-color: #5c3d34;
+}
+
+.criar-campanha-container .btn-logout:hover {
+    background-color: #7a5347;
+}

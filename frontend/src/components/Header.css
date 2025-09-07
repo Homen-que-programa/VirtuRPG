@@ -1,0 +1,31 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #3f3124; /* tom mais “madeira/castelo” */
+  color: #f5f0e6;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+  border-bottom: 2px solid #a87c4c;
+  font-family: 'Cinzel', serif;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: default;
+}
+
+.nav a {
+  color: #f5f0e6;
+  text-decoration: none;
+  margin-left: 2rem;
+  font-weight: 500;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.nav a:hover {
+  color: #ffcc00;
+  transform: scale(1.05);
+}
