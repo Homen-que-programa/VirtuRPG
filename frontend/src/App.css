@@ -1,9 +1,23 @@
 /* Fontes elegantes para RPG medieval */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;500&display=swap');
 
+/* Paleta do site definida pelo usuário */
+:root {
+  --bg: #1f1818;                   /* fundo principal da página */
+  --nav-card: #2b2121;             /* fundo dos cards e seções */
+  --title-color: #fff;             /* branco para títulos */
+  --text-secondary: #f3f3f3;       /* cinza claro para subtítulos e descrições */
+  --btn-primary: #ff5e57;          /* vermelho principal */
+  --btn-hover: #ff8a5c;            /* vermelho mais claro no hover */
+  --accent-yellow: #ffd166;        /* amarelo para detalhes e destaques */
+  --accent-red-dark: #b72c2c;      /* vermelho escuro para textos ou ícones importantes */
+  --accent-red-light: #ff7f7f;     /* vermelho suave para cards ou bordas */
+  --card-border: rgba(255, 217, 91, 0.15); /* bordas sutis nos cards */
+}
+
 body {
-  background-color: rgb(43, 33, 33);
-  color: #f5f0e6; /* texto principal mais claro */
+  background-color: var(--bg);
+  color: var(--title-color); /* texto principal */
   font-family: 'Roboto', sans-serif;
   margin: 0;
   padding: 0;
@@ -13,12 +27,12 @@ body {
 /* Links globais */
 a {
   text-decoration: none;
-  color: #f5f0e6;
+  color: var(--title-color);
   transition: color 0.2s ease;
 }
 
 a:hover {
-  color: #ffcc00; /* destaque de hover */
+  color: var(--btn-hover);
 }
 
 /* Lista de cards */

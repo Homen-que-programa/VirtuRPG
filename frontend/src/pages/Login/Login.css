@@ -4,28 +4,28 @@
     justify-content: center;
     align-items: center;
     min-height: 80vh;
-    background: linear-gradient(135deg, #2b1e1e, #3d2f2f);
     font-family: 'Cinzel', serif;
 }
 
 /* Caixa central */
 .login-box {
-    background-color: rgba(40, 30, 30, 0.95);
+    background-color: var(--nav-card);
     padding: 40px;
     border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-    width: 320px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    width: 340px;
     text-align: center;
+    border: 1px solid var(--card-border);
 }
 
 /* Títulos */
 .login-box h1 {
-    color: #f0e6d2;
+    color: var(--title-color);
     font-size: 32px;
     margin-bottom: 5px;
 }
 .login-subtitle {
-    color: #d4c4a8;
+    color: var(--text-secondary);
     margin-bottom: 25px;
     font-style: italic;
 }
@@ -37,24 +37,24 @@
     padding: 12px 15px;
     margin-bottom: 15px;
     border-radius: 8px;
-    border: 1px solid #5a4a3a;
-    background-color: #3c2f2f;
-    color: #f0e6d2;
+    border: 1px solid var(--border-color);
+    background-color: var(--nav-card);
+    color: var(--title-color);
     font-size: 16px;
     outline: none;
     transition: border-color 0.3s, box-shadow 0.3s;
 }
 .login-input:focus {
-    border-color: #d4c4a8;
-    box-shadow: 0 0 5px #d4c4a8;
+    border-color: var(--accent-yellow);
+    box-shadow: 0 0 8px rgba(255, 209, 102, 0.2);
 }
 
 /* Botão */
 .login-button {
     width: 100%;
     padding: 12px;
-    background-color: #8b5e3c;
-    color: #f0e6d2;
+    background-color: var(--btn-primary);
+    color: var(--title-color);
     border: none;
     border-radius: 8px;
     font-size: 16px;
@@ -62,25 +62,29 @@
     transition: background-color 0.3s;
 }
 .login-button:hover {
-    background-color: #a3734e;
+    background-color: var(--btn-hover);
 }
 
 /* Mensagem de erro */
 .login-error {
-    color: #ff6b6b;
-    margin-top: 10px;
-    font-weight: bold;
+    color: var(--btn-primary);
+    margin-top: 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 /* Links */
 .login-links {
-    margin-top: 15px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 .login-links a {
-    color: #d4c4a8;
+    color: var(--text-secondary);
     text-decoration: none;
     transition: color 0.3s;
 }
 .login-links a:hover {
-    color: #f0e6d2;
+    color: var(--accent-yellow);
 }

@@ -1,8 +1,8 @@
 body {
   margin: 0;
   font-family: "Merriweather", serif; /* fonte medieval elegante */
-  background-color: #2f2b2b; /* cor escura base */
-  color: #f5f0e6; /* cor clara para contraste */
+  background-color: var(--bg);
+  color: var(--title-color);
 }
 
 /* Container central */
@@ -16,7 +16,7 @@ body {
 h1, h2 {
   text-align: center;
   font-weight: 700;
-  color: #e2c08d; /* dourado pergaminho */
+  color: var(--title-color);
   margin-bottom: 25px;
 }
 
@@ -24,16 +24,16 @@ h1, h2 {
 .empty-msg {
   text-align: center;
   font-style: italic;
-  color: #b7a58b;
+  color: var(--text-secondary);
 }
 
 /* Botão criar campanha */
 .create-btn {
   display: block;
   margin: 0 auto 30px;
-  background-color: #5b3e1a; /* marrom madeira */
-  color: #f5f0e6;
-  border: 2px solid #a87c4c; /* dourado leve */
+  background-color: var(--btn-primary);
+  color: var(--title-color);
+  border: 2px solid var(--border-color);
   padding: 12px 24px;
   border-radius: 12px;
   cursor: pointer;
@@ -42,8 +42,8 @@ h1, h2 {
 }
 
 .create-btn:hover {
-  background-color: #6f4a23;
-  border-color: #d4b87a;
+  background-color: var(--btn-hover);
+  border-color: var(--btn-primary);
   transform: translateY(-2px);
 }
 

@@ -3,20 +3,20 @@
   text-align: center;
   box-sizing: border-box;
   padding: 15px;
-  background-color: #3f3124;
-  border-top: 2px solid #a87c4c;
+  background-color: var(--nav-card);
+  border-top: 2px solid var(--border-color);
   margin-top: auto;
   font-family: 'Roboto', sans-serif;
-  color: #f5f0e6;
+  color: var(--title-color);
 }
 
 .links-footer a {
-  color: #f5f0e6;
+  color: var(--title-color);
   text-decoration: none;
   margin: 0 10px;
   transition: color 0.3s;
 }
 
 .links-footer a:hover {
-  color: #ffcc00;
+  color: var(--btn-hover);
 }

@@ -11,7 +11,7 @@
   font-family: 'Cinzel', serif;
   font-weight: 700;
   font-size: 2rem;
-  color: #e2c08d; /* dourado pergaminho */
+  color: var(--title-color);
   margin-bottom: 30px;
 }
 
@@ -26,11 +26,11 @@
 
 /* Card individual */
 .campanha-card {
-  background-color: #3f3124; /* marrom escuro */
+  background-color: var(--nav-card);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-  border: 2px solid #a87c4c; /* dourado leve */
+  border: 2px solid var(--border-color);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -44,12 +44,12 @@
   font-family: 'Cinzel', serif;
   font-size: 1.4rem;
   margin: 0 0 10px;
-  color: #e2c08d;
+  color: var(--title-color);
 }
 
 .campanha-card p {
   margin: 5px 0;
-  color: #f5f0e6;
+  color: var(--title-color);
   font-size: 0.95rem;
 }
 
@@ -59,16 +59,16 @@
   padding: 10px 20px;
   border: none;
   border-radius: 12px;
-  background-color: #5b3e1a; /* marrom madeira */
-  color: #f5f0e6;
+  background-color: var(--btn-primary);
+  color: var(--title-color);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .campanha-card button:hover {
-  background-color: #6f4a23;
-  border-color: #d4b87a;
+  background-color: var(--btn-hover);
+  border-color: var(--btn-primary);
   transform: translateY(-2px);
 }
 
@@ -81,6 +81,6 @@
 .empty-msg {
   text-align: center;
   font-style: italic;
-  color: #b7a58b;
+  color: var(--text-secondary);
   margin-top: 20px;
 }

@@ -69,7 +69,7 @@ const Cadastro = () => {
           Cadastrar
         </button>
 
-        {mensagem && <p className="cadastro-error">{mensagem}</p>}
+        {mensagem && <p className="cadastro-mensagem">{mensagem}</p>}
 
         <div className="cadastro-links">
           <Link to="/login">Já tem uma conta? Entre</Link>

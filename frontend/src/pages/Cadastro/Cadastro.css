@@ -1,89 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;500&display=swap');
+
+/* Página de Cadastro */
 .cadastro-page {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 80vh;
-    background: linear-gradient(135deg, #2b1e1e, #3d2f2f);
-    font-family: 'Cinzel', serif;
+  display: flex;
+  flex-direction: column; /* mantém header/conteúdo/footer */
+  justify-content: flex-start;
+  align-items: center;
+  padding: 50px 20px;
+  font-family: 'Cinzel', serif;
+  box-sizing: border-box;
 }
 
+/* Card do Cadastro */
 .cadastro-box {
-    background-color: rgba(40, 30, 30, 0.95);
-    padding: 40px;
-    border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-    width: 360px;
-    text-align: center;
+  background-color: var(--nav-card);
+  padding: 40px 35px;
+  border-radius: 15px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--card-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
+/* Título */
 .cadastro-box h1 {
-    color: #f0e6d2;
-    font-size: 32px;
-    margin-bottom: 5px;
+  font-family: 'Cinzel', serif;
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+  text-align: center;
+  color: var(--accent-yellow);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
+/* Subtítulo */
 .cadastro-subtitle {
-    color: #d4c4a8;
-    margin-bottom: 25px;
-    font-style: italic;
+  color: var(--text-secondary);
+  margin-bottom: 30px;
+  font-style: italic;
+  text-align: center;
+  font-size: 1rem;
 }
 
+/* Inputs */
 .cadastro-input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px 15px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    border: 1px solid #5a4a3a;
-    background-color: #3c2f2f;
-    color: #f0e6d2;
-    font-size: 16px;
-    outline: none;
-    transition: border-color 0.3s, box-shadow 0.3s;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background-color: var(--nav-card);
+  color: var(--title-color);
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
 }
 
 .cadastro-input:focus {
-    border-color: #d4c4a8;
-    box-shadow: 0 0 5px #d4c4a8;
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 8px rgba(255, 209, 102, 0.2);
 }
 
+/* Botão */
 .cadastro-button {
-    width: 100%;
-    padding: 12px;
-    background-color: #8b5e3c;
-    color: #f0e6d2;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
+  width: 100%;
+  padding: 12px;
+  background-color: var(--btn-primary);
+  color: var(--title-color);
+  border: 1px solid var(--btn-primary);
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: 'Roboto', sans-serif;
+  transition: all 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .cadastro-button:hover {
-    background-color: #a3734e;
+  background-color: var(--btn-hover);
+  border-color: var(--btn-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
+/* Mensagem de erro */
 .cadastro-mensagem {
-    color: #ff6b6b;
-    margin-top: 10px;
-    font-weight: bold;
+  color: var(--accent-yellow);
+  text-align: center;
+  margin-top: 15px;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-.cadastro-login-link,
-.login-cadastro-link {
-    margin-top: 15px;
-    color: #d4c4a8;
-    font-size: 14px;
+/* Links */
+.cadastro-links {
+  margin-top: 20px;
+  text-align: center;
 }
 
-.cadastro-login-link a,
-.login-cadastro-link a {
-    color: #f0e6d2;
-    text-decoration: underline;
-    transition: color 0.3s;
+.cadastro-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.3s;
 }
 
-.cadastro-login-link a:hover,
-.login-cadastro-link a:hover {
-    color: #a3734e;
+.cadastro-links a:hover {
+  color: var(--accent-yellow);
+}
+
+/* Footer ajustado para ficar no fim da página */
+.footer {
+  width: 100%;
+  text-align: center;
+  padding: 15px;
+  margin-top: auto; /* força o footer para o fim da coluna */
+  background-color: var(--nav-card);
+  border-top: 2px solid var(--border-color);
+}
+
+.links-footer a {
+  color: var(--title-color);
+  text-decoration: none;
+  margin: 0 10px;
+  transition: color 0.3s;
+}
+
+.links-footer a:hover {
+  color: var(--btn-hover);
 }

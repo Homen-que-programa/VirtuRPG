@@ -3,10 +3,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: #3f3124; /* tom mais “madeira/castelo” */
-  color: #f5f0e6;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.6);
-  border-bottom: 2px solid #a87c4c;
+  background-color: var(--nav-card);
+  color: var(--title-color);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+  border-bottom: 1px solid var(--border-color);
   font-family: 'Cinzel', serif;
 }
 
@@ -18,7 +18,7 @@
 }
 
 .nav a {
-  color: #f5f0e6;
+  color: var(--title-color);
   text-decoration: none;
   margin-left: 2rem;
   font-weight: 500;
@@ -26,6 +26,6 @@
 }
 
 .nav a:hover {
-  color: #ffcc00;
+  color: var(--btn-hover);
   transform: scale(1.05);
 }

@@ -40,28 +40,29 @@ const Login = () => {
         <h1>VirtualRPG</h1>
         <p className="login-subtitle">Entre na aventura</p>
 
-        <input
-          className="login-input"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          className="login-input"
-          placeholder="Senha"
-          type="password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-        />
-        <button className="login-button" onClick={handleLogin}>
-          Entrar
-        </button>
+        <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+          <input
+            className="login-input"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            className="login-input"
+            placeholder="Senha"
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+          />
+          <button className="login-button" type="submit">
+            Entrar
+          </button>
+        </form>
 
         {mensagem && <p className="login-error">{mensagem}</p>}
 
         <div className="login-links">
           <Link to="/cadastro">Criar conta</Link>
-          <span> | </span>
           <Link to="/esqueci-senha">Esqueci minha senha</Link>
         </div>
       </div>

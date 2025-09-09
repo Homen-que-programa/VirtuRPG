@@ -174,9 +174,7 @@ const Notificacoes = () => {
                         {!n.lida && n.tipo !== "pedido" && (
                             <button onClick={() => marcarComoLida(n.id)}>Marcar como lida</button>
                         )}
-                        <p style={{ fontSize: "0.8rem", color: "#b7a58b" }}>
-                            {new Date(n.criadaEm).toLocaleString()}
-                        </p>
+                        <p className="small-muted">{new Date(n.criadaEm).toLocaleString()}</p>
                     </li>
                 ))}
             </ul>

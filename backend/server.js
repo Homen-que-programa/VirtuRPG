@@ -58,6 +58,16 @@ io.on("connection", socket => {
     console.log(`Usuário ${userId} entrou na sala user_${userId}`);
   });
 
+  socket.on("entrarSalaChat", (salaId) => {
+    socket.join(`sala_${salaId}`);
+    console.log(`Usuário entrou na sala de chat ${salaId}`);
+  });
+
+  socket.on("sairSalaChat", (salaId) => {
+    socket.leave(`sala_${salaId}`);
+    console.log(`Usuário saiu da sala de chat ${salaId}`);
+  });
+
   socket.on("disconnect", () => {
     console.log("Cliente desconectado:", socket.id);
   });
@@ -580,4 +590,98 @@ app.get("/perfil", authenticateToken, async (req, res) => {
 // 🔹 INICIALIZA O SERVIDOR
 server.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT} [${NODE_ENV}]`);
+});
+
+// =================== ROTAS DE CHAT ===================
+
+// Criar sala de chat para uma campanha
+app.post("/campanhas/:id/salas", async (req, res) => {
+  try {
+    const campanhaId = Number(req.params.id);
+    const { nome, usuarioId } = req.body;
+
+    if (!nome || !usuarioId) return res.status(400).json({ message: "Nome da sala e usuarioId são obrigatórios" });
+
+    const [result] = await db.query(
+      "INSERT INTO salas_chat (campanha_id, nome, criado_por) VALUES (?, ?, ?)",
+      [campanhaId, nome, usuarioId]
+    );
+
+    res.status(201).json({ message: "Sala criada", salaId: result.insertId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erro no servidor", error: err.message });
+  }
+});
+
+// Listar salas de uma campanha
+app.get("/campanhas/:id/salas", async (req, res) => {
+  try {
+    const campanhaId = Number(req.params.id);
+
+    const [rows] = await db.query(
+      "SELECT * FROM salas_chat WHERE campanha_id = ? ORDER BY criada_em DESC",
+      [campanhaId]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erro no servidor", error: err.message });
+  }
+});
+
+// Enviar mensagem
+app.post("/salas/:id/mensagens", async (req, res) => {
+  try {
+    const salaId = Number(req.params.id);
+    const { usuarioId, mensagem } = req.body;
+
+    if (!mensagem || !usuarioId) return res.status(400).json({ message: "Mensagem e usuarioId são obrigatórios" });
+
+    const [result] = await db.query(
+      "INSERT INTO mensagens_chat (sala_id, usuario_id, mensagem) VALUES (?, ?, ?)",
+      [salaId, usuarioId, mensagem]
+    );
+
+    // Buscar a mensagem com dados do usuário
+    const [msgRows] = await db.query(
+      `SELECT m.*, u.nome, u.apelido FROM mensagens_chat m
+       JOIN usuarios u ON m.usuario_id = u.id
+       WHERE m.id = ?`,
+      [result.insertId]
+    );
+
+    const novaMensagem = msgRows[0];
+
+    // Emitir via socket
+    if (req.io) {
+      req.io.to(`sala_${salaId}`).emit('novaMensagem', novaMensagem);
+    }
+
+    res.status(201).json(novaMensagem);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erro no servidor", error: err.message });
+  }
+});
+
+// Listar mensagens de uma sala
+app.get("/salas/:id/mensagens", async (req, res) => {
+  try {
+    const salaId = Number(req.params.id);
+
+    const [rows] = await db.query(
+      `SELECT m.*, u.nome, u.apelido FROM mensagens_chat m
+       JOIN usuarios u ON m.usuario_id = u.id
+       WHERE m.sala_id = ?
+       ORDER BY m.enviada_em ASC`,
+      [salaId]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erro no servidor", error: err.message });
+  }
 });

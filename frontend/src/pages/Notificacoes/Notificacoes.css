@@ -11,7 +11,7 @@
   font-family: 'Cinzel', serif;
   font-size: 2rem;
   font-weight: 700;
-  color: #e2c08d; /* dourado pergaminho */
+  color: var(--title-color);
   margin-bottom: 30px;
 }
 
@@ -26,11 +26,11 @@
 
 /* Card individual */
 .notificacao-card {
-  background-color: #3f3124; /* marrom escuro */
+  background-color: var(--nav-card);
   border-radius: 12px;
   padding: 15px 20px;
-  border: 2px solid #a87c4c; /* dourado leve */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  border: 2px solid var(--border-color);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
   transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
 }
 
@@ -41,13 +41,13 @@
 
 /* Tipo da notificação */
 .notificacao-card strong {
-  color: #ffcc00; /* destaque dourado */
+  color: var(--btn-hover);
 }
 
 /* Mensagem */
 .notificacao-card p {
   margin: 5px 0;
-  color: #f5f0e6;
+  color: var(--title-color);
   font-size: 0.95rem;
 }
 
@@ -57,23 +57,23 @@
   padding: 8px 16px;
   border: none;
   border-radius: 10px;
-  background-color: #5b3e1a;
-  color: #f5f0e6;
+  background-color: var(--btn-primary);
+  color: var(--title-color);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .notificacao-card button:hover {
-  background-color: #6f4a23;
-  border-color: #d4b87a;
+  background-color: var(--btn-hover);
+  border-color: var(--btn-primary);
   transform: translateY(-1px);
 }
 
 .notificacao-card.lida {
-  background-color: #2f2b2b; /* escurecer notificações lidas */
-  border-color: #666;
-  color: #999;
+  background-color: var(--bg);
+  border-color: rgba(255,255,255,0.03);
+  color: var(--text-secondary);
 }
 
 .acoes-pedido {
@@ -92,21 +92,26 @@
 }
 
 .acoes-pedido button:first-child {
-  background-color: #5b8c5a; /* verde para aceitar */
-  color: #fff;
+  background-color: var(--btn-hover);
+  color: var(--bg);
 }
 
 .acoes-pedido button:first-child:hover {
-  background-color: #73a06c;
+  opacity: 0.9;
   transform: translateY(-1px);
 }
 
 .acoes-pedido button:last-child {
-  background-color: #b22222; /* vermelho para recusar */
-  color: #fff;
+  background-color: var(--btn-primary);
+  color: var(--title-color);
 }
 
 .acoes-pedido button:last-child:hover {
-  background-color: #e04c4c;
+  background-color: var(--btn-hover);
   transform: translateY(-1px);
+}
+
+.small-muted {
+  font-size: 0.8rem;
+  color: var(--text-secondary) !important;
 }

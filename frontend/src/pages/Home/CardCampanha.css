@@ -1,6 +1,6 @@
 .card-campanha {
-  background: linear-gradient(to bottom, #3f3124, #5b4630);
-  border: 2px solid #a87c4c;
+  background: linear-gradient(to bottom, var(--nav-card), rgba(0,0,0,0.2));
+  border: 2px solid var(--border-color);
   border-radius: 16px;
   padding: 20px;
   cursor: pointer;
@@ -23,13 +23,13 @@
 .campaign-name {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #f0e1b8;
+  color: var(--title-color);
   font-family: "Cinzel", serif;
 }
 
 .campaign-mestre {
   font-style: italic;
-  color: #d4b87a;
+  color: var(--text-secondary);
 }
 
 /* Conteúdo expandido */
@@ -49,7 +49,7 @@
 .campaign-description {
   margin-bottom: 10px;
   line-height: 1.5;
-  color: #f5f0e6;
+  color: var(--title-color);
 }
 
 .user-list li {
@@ -65,9 +65,9 @@
 
 .card-actions button {
   flex: 1;
-  background-color: #5b3e1a;
-  border: 2px solid #a87c4c;
-  color: #f5f0e6;
+  background-color: var(--btn-primary);
+  border: 2px solid var(--border-color);
+  color: var(--title-color);
   padding: 8px;
   border-radius: 10px;
   cursor: pointer;
@@ -76,7 +76,7 @@
 }
 
 .card-actions button:hover {
-  background-color: #6f4a23;
-  border-color: #d4b87a;
+  background-color: var(--btn-hover);
+  border-color: var(--btn-primary);
   transform: translateY(-2px);
 }

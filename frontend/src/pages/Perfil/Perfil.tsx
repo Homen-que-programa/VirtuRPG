@@ -76,19 +76,30 @@ const Perfil = () => {
     <div className="perfil-container">
       <div className="perfil-card">
         <h1>Perfil do Jogador</h1>
-        {mensagem && <p className="mensagem">{mensagem}</p>}
+        {mensagem && <p className="mensagem-feedback">{mensagem}</p>}
 
         {user ? (
           <div className="info-usuario">
-            <p><strong>ID:</strong> {user.id}</p>
-            {user.nome && <p><strong>Nome:</strong> {user.nome}</p>}
-            <p><strong>Email:</strong> {user.email}</p>
+            <div className="info-item">
+              <span>ID:</span>
+              <p>{user.id}</p>
+            </div>
+            {user.nome && (
+              <div className="info-item">
+                <span>Nome:</span>
+                <p>{user.nome}</p>
+              </div>
+            )}
+            <div className="info-item">
+              <span>Email:</span>
+              <p>{user.email}</p>
+            </div>
 
-            <div className="acoes">
-              <button className="btn" onClick={handleLogout}>Sair</button>
-              <button className="btn btn-edit">Editar Perfil</button>
-              <button className="btn btn-edit">Alterar Senha</button>
-              <button className="btn btn-delete" onClick={handleDelete}>Deletar Conta</button>
+            <div className="acoes-perfil">
+              <button className="btn-perfil" onClick={handleLogout}>Sair</button>
+              <button className="btn-perfil btn-edit">Editar Perfil</button>
+              <button className="btn-perfil btn-edit">Alterar Senha</button>
+              <button className="btn-perfil btn-delete" onClick={handleDelete}>Deletar Conta</button>
             </div>
           </div>
         ) : (
