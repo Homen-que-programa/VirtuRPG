@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import ConteudoCampanha from "./ConteudoCampanha";
 import SidebarCampanha from "./SidebarCampanha";
 import type { Campanha } from "../../types";
 import "./PaginaCampanha.css";
@@ -17,11 +16,12 @@ const PaginaCampanha = () => {
     jogadores: [],
   });
   const [mensagem, setMensagem] = useState("");
-  const [activeSection, setActiveSection] = useState("informacoes"); const { accessToken } = useAuth();
+  const { accessToken, loading } = useAuth();
 
   useEffect(() => {
+    if (loading) return; // Aguarda carregar tokens do sessionStorage
     if (!accessToken) {
-      navigate("/"); // ou "/homelogoff"
+      navigate("/homelogoff", { replace: true });
       return;
     }
 
@@ -43,17 +43,16 @@ const PaginaCampanha = () => {
     };
 
     fetchCampanha();
-  }, [id, accessToken, navigate]);
+  }, [id, accessToken, loading, navigate]);
 
+  if (loading) return <p>Carregando...</p>;
   if (!campanha) return <p>{mensagem || "Carregando campanha..."}</p>;
 
   return (
     <div className="pagina-campanha-container">
-      <SidebarCampanha
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-      />
-      <ConteudoCampanha campanha={campanha} activeSection={activeSection} />
+      <SidebarCampanha />
+      {/* Provide campanha via Outlet context to child routes */}
+      <Outlet context={{ campanha }} />
     </div>
   );
 };

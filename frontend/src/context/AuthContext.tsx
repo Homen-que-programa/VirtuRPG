@@ -37,24 +37,74 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const savedAccessToken = sessionStorage.getItem("accessToken");
     const savedRefreshToken = sessionStorage.getItem("refreshToken");
 
-    setAccessToken(savedAccessToken);
-    setRefreshToken(savedRefreshToken);
-
-    if (savedAccessToken) {
-      try {
-        const decoded: any = jwtDecode(savedAccessToken);
-        setUser({
-          id: decoded.id,
-          nome: decoded.nome,
-          email: decoded.email,
-        });
-      } catch (err) {
-        console.error("Erro ao decodificar token:", err);
-        setUser(null);
+    const checkAndRefreshToken = async () => {
+      if (savedAccessToken) {
+        try {
+          const decoded: any = jwtDecode(savedAccessToken);
+          const currentTime = Date.now() / 1000;
+          if (decoded.exp < currentTime) {
+            // Token expirado, tentar refresh
+            if (savedRefreshToken) {
+              try {
+                const response = await fetch('http://localhost:3000/refresh-token', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ refreshToken: savedRefreshToken }),
+                });
+                if (response.ok) {
+                  const data = await response.json();
+                  sessionStorage.setItem("accessToken", data.accessToken);
+                  sessionStorage.setItem("refreshToken", data.refreshToken);
+                  setAccessToken(data.accessToken);
+                  setRefreshToken(data.refreshToken);
+                  const newDecoded: any = jwtDecode(data.accessToken);
+                  setUser({
+                    id: newDecoded.id,
+                    nome: newDecoded.nome,
+                    email: newDecoded.email,
+                  });
+                } else {
+                  // Refresh falhou, logout
+                  sessionStorage.removeItem("accessToken");
+                  sessionStorage.removeItem("refreshToken");
+                  setAccessToken(null);
+                  setRefreshToken(null);
+                  setUser(null);
+                }
+              } catch (err) {
+                console.error("Erro ao refresh token:", err);
+                sessionStorage.removeItem("accessToken");
+                sessionStorage.removeItem("refreshToken");
+                setAccessToken(null);
+                setRefreshToken(null);
+                setUser(null);
+              }
+            } else {
+              // Sem refresh token, logout
+              sessionStorage.removeItem("accessToken");
+              setAccessToken(null);
+              setUser(null);
+            }
+          } else {
+            setAccessToken(savedAccessToken);
+            setUser({
+              id: decoded.id,
+              nome: decoded.nome,
+              email: decoded.email,
+            });
+          }
+        } catch (err) {
+          console.error("Erro ao decodificar token:", err);
+          sessionStorage.removeItem("accessToken");
+          setAccessToken(null);
+          setUser(null);
+        }
       }
-    }
+      setRefreshToken(savedRefreshToken);
+      setLoading(false);
+    };
 
-    setLoading(false);
+    checkAndRefreshToken();
   }, []);
 
   const setTokens = (newAccessToken: string | null, newRefreshToken?: string | null) => {

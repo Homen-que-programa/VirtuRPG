@@ -1,18 +1,15 @@
-import React from 'react';
+import { NavLink, useParams } from 'react-router-dom';
 import './PaginaCampanha.css';
 
-interface Props {
-  activeSection: string;
-  setActiveSection: (section: string) => void;
-}
-
-const SidebarCampanha: React.FC<Props> = ({ activeSection, setActiveSection }) => {
+const SidebarCampanha = () => {
+  const { id } = useParams<{ id: string }>();
   const sections = [
     { id: 'informacoes', label: 'Informações' },
     { id: 'chat', label: 'Chat' },
     { id: 'fichas', label: 'Fichas de Personagens' },
-    { id: 'sessao', label: 'Mestrar Sessão' },
+  { id: 'sessao', label: 'Mestrar Sessão' },
     { id: 'ferramentas', label: 'Ferramentas de Mestre' },
+  { id: 'notas', label: 'Notas do Mestre' },
   ];
 
   return (
@@ -20,12 +17,14 @@ const SidebarCampanha: React.FC<Props> = ({ activeSection, setActiveSection }) =
       <h3>Veja sua Campanha</h3>
       <ul>
         {sections.map((sec) => (
-          <li
-            key={sec.id}
-            className={activeSection === sec.id ? 'active' : ''}
-            onClick={() => setActiveSection(sec.id)}
-          >
-            {sec.label}
+          <li key={sec.id}>
+            <NavLink
+              to={id ? (sec.id === 'informacoes' ? `/campanha/${id}` : `/campanha/${id}/${sec.id}`) : '#'}
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              end={sec.id === 'informacoes'}
+            >
+              {sec.label}
+            </NavLink>
           </li>
         ))}
       </ul>

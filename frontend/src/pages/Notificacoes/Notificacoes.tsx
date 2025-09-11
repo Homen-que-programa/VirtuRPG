@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { io, Socket } from "socket.io-client";
+import { useSocket } from "../../hooks/useSocket";
 import { useApi } from "../../services/api";
 
 interface Notificacao {
@@ -17,13 +17,16 @@ interface Notificacao {
     usuarioIdReferencia?: number;
 }
 
-let socket: Socket;
-
 const Notificacoes = () => {
-    const { user } = useAuth();
+    const { user, accessToken } = useAuth();
     const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
     const [loading, setLoading] = useState(true);
     const { apiFetch } = useApi();
+    const socket = useSocket(
+        'http://localhost:3000',
+        { token: accessToken },
+        { enabled: Boolean(accessToken) }
+    );
 
     // Buscar notificações do backend
     const fetchNotificacoes = async () => {
@@ -71,10 +74,7 @@ const Notificacoes = () => {
     useEffect(() => {
         fetchNotificacoes();
 
-        if (!user?.id) return;
-
-        // Conectar ao Socket.IO
-        socket = io("http://localhost:3000");
+        if (!user?.id || !socket) return;
 
         // Entrar na sala específica do usuário
         socket.emit("entrarSalaUsuario", user.id);
@@ -102,9 +102,9 @@ const Notificacoes = () => {
         });
 
         return () => {
-            socket.disconnect();
+            socket.off("novaNotificacao");
         };
-    }, [user?.id]);
+    }, [user?.id, socket]);
 
     const aceitarPedido = async (notificacao: Notificacao) => {
         const campanhaIdNum = Number(notificacao.campanhaId);

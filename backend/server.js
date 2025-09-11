@@ -51,7 +51,22 @@ app.use((req, res, next) => {
 });
 
 io.on("connection", socket => {
-  console.log("Novo cliente conectado:", socket.id);
+  const token = socket.handshake.auth?.token;
+  if (!token) {
+    console.log("Conexão sem token, desconectando:", socket.id);
+    socket.disconnect();
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    socket.user = decoded;
+    console.log("Novo cliente conectado:", socket.id, "Usuário:", decoded.id);
+  } catch (err) {
+    console.log("Token inválido ou expirado, desconectando:", socket.id, err.message);
+    socket.disconnect();
+    return;
+  }
 
   socket.on("entrarSalaUsuario", (userId) => {
     socket.join(`user_${userId}`);
@@ -87,6 +102,19 @@ function authenticateToken(req, res, next) {
       return res.status(401).json({ message: "Token expirado" });
     }
     return res.status(401).json({ message: "Token inválido" });
+  }
+}
+
+// Helper to check if current user has one of allowed roles in a campaign
+async function userHasRoleInCampaign(userId, campanhaId, allowedRoles = ['admin','mestre','dm-assistant']) {
+  try {
+    const [rows] = await db.query('SELECT papel FROM usuarios_campanhas WHERE usuario_id = ? AND campanha_id = ?', [userId, campanhaId]);
+    if (!rows.length) return false;
+    const papel = rows[0].papel;
+    return allowedRoles.includes(papel);
+  } catch (err) {
+    console.error('Erro verificando papel do usuário:', err);
+    return false;
   }
 }
 
@@ -388,6 +416,81 @@ app.get("/campanha/:id", async (req, res) => {
   } catch (err) {
     console.error("Erro ao buscar campanha:", err);
     res.status(500).json({ message: "Erro no servidor", error: err.message });
+  }
+});
+
+// Atualizar metadados da campanha (notas, tags, sistema, status, imagem)
+app.patch('/campanha/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+  const { notas, tags, sistema, status, imagem_url, nome, descricao, sistema_id } = req.body;
+
+  // Basic check: campanha exists
+    const [rows] = await db.query('SELECT id FROM campanhas WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ message: 'Campanha não encontrada' });
+
+  // Authorization: only users with roles admin/mestre/dm-assistant can update metadata
+  const allowed = await userHasRoleInCampaign(req.user.id, id);
+  if (!allowed) return res.status(403).json({ message: 'Permissão negada' });
+
+  const updates = [];
+  const values = [];
+
+  if (nome !== undefined) { updates.push('nome = ?'); values.push(nome); }
+  if (descricao !== undefined) { updates.push('descricao = ?'); values.push(descricao); }
+  if (notas !== undefined) { updates.push('notas = ?'); values.push(notas); }
+  if (tags !== undefined) { updates.push('tags = ?'); values.push(tags); }
+  if (sistema_id !== undefined) { updates.push('sistema_id = ?'); values.push(sistema_id); }
+  else if (sistema !== undefined) { updates.push('sistema = ?'); values.push(sistema); }
+  if (status !== undefined) { updates.push('status = ?'); values.push(status); }
+  if (imagem_url !== undefined) { updates.push('imagem_url = ?'); values.push(imagem_url); }
+
+    if (updates.length === 0) return res.status(400).json({ message: 'Nada para atualizar' });
+
+    const sql = `UPDATE campanhas SET ${updates.join(', ')} WHERE id = ?`;
+    values.push(id);
+
+    await db.query(sql, values);
+
+    const [updatedRows] = await db.query('SELECT * FROM campanhas WHERE id = ?', [id]);
+    res.json({ campanha: updatedRows[0] });
+  } catch (err) {
+    console.error('Erro ao atualizar campanha:', err);
+    res.status(500).json({ message: 'Erro no servidor', error: err.message });
+  }
+});
+
+// Listar sistemas disponíveis
+app.get('/sistemas', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT id, nome, descricao FROM sistemas ORDER BY nome');
+    res.json({ sistemas: rows });
+  } catch (err) {
+    console.error('Erro ao listar sistemas:', err);
+    res.status(500).json({ message: 'Erro no servidor' });
+  }
+});
+
+// Atualizar próxima sessão estruturada de uma campanha
+app.patch('/campanha/:id/next-session', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { datetime, local, link } = req.body;
+
+  const [rows] = await db.query('SELECT id FROM campanhas WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ message: 'Campanha não encontrada' });
+
+  // Authorization: only admin/mestre/dm-assistant can set next session
+  const allowed2 = await userHasRoleInCampaign(req.user.id, id);
+  if (!allowed2) return res.status(403).json({ message: 'Permissão negada' });
+
+    await db.query('UPDATE campanhas SET next_session_datetime = ?, next_session_local = ?, next_session_link = ? WHERE id = ?', [datetime || null, local || null, link || null, id]);
+
+    const [updated] = await db.query('SELECT * FROM campanhas WHERE id = ?', [id]);
+    res.json({ campanha: updated[0] });
+  } catch (err) {
+    console.error('Erro ao atualizar next-session:', err);
+    res.status(500).json({ message: 'Erro no servidor' });
   }
 });
 

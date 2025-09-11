@@ -15,6 +15,16 @@ export interface Campanha {
   descricao?: string;
   mestre?: string;
   jogadores?: string[];
+  criado_em?: string;
+  tags?: string | null; // comma separated or JSON
+  sistema?: string | null;
+  status?: string | null;
+  imagem_url?: string | null;
+  notas?: string | null;
+  next_session_datetime?: string | null;
+  next_session_local?: string | null;
+  next_session_link?: string | null;
+  sistema_id?: number | null;
 }
 
 // Relação usuário <-> campanha (opcional, se você precisar)
