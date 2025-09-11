@@ -4,6 +4,8 @@ import { useAuth } from "../../context/AuthContext";
 import SidebarCampanha from "./SidebarCampanha";
 import type { Campanha } from "../../types";
 import "./PaginaCampanha.css";
+import "./InformacoesCampanha.css";
+import "./ChatCampanha.css";
 
 const PaginaCampanha = () => {
   const { id } = useParams<{ id: string }>();
