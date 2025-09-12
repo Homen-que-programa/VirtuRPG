@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import type { Campanha } from '../../types';
+import type { Campanha, User } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { useApi } from '../../services/api';
+import { useSocket } from '../../hooks/useSocket';
 
 const InformacoesCampanha = () => {
   const { campanha } = useOutletContext<{ campanha: Campanha }>();
@@ -24,9 +26,15 @@ const InformacoesCampanha = () => {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
+  const [participantes, setParticipantes] = useState<Array<{ id: number; nome: string; apelido?: string; papel: string; imagem_url?: string }>>([]);
+
+  const socket = useSocket('http://localhost:3000', { token: accessToken }, { enabled: Boolean(accessToken) });
+
+  const { apiFetch } = useApi();
 
   useEffect(() => {
-    fetch('http://localhost:3000/sistemas')
+    apiFetch('/sistemas')
       .then(r => r.json())
       .then(d => setSistemas(d.sistemas || []))
       .catch(() => setSistemas([]));
@@ -42,9 +50,27 @@ const InformacoesCampanha = () => {
     setSistemaProprio(!!hasCustomSistema);
     setSistemaProprioNome(hasCustomSistema ? (campanha.sistema as string) : '');
     setImagemUrl(campanha.imagem_url || '');
+    setParticipantes(campanha.participantes || []);
   }, [campanha]);
 
-  const isMestreOrAdmin = user && (user.nome === campanha.mestre); // quick front check; backend enforces
+  useEffect(() => {
+    if (!socket) return;
+    socket.emit('join_campaign', campanha.id);
+    const handler = (data: { users: User[] }) => setOnlineUsers(data.users);
+    socket.on('users_online', handler);
+    return () => {
+      socket.off('users_online', handler);
+      socket.emit('leave_campaign', campanha.id);
+    };
+  }, [socket, campanha.id]);
+
+  const isMestreOrAdmin = !!(user && (
+    Array.isArray(campanha.mestres)
+      ? campanha.mestres.includes(user.nome)
+      : typeof campanha.mestres === 'string'
+        ? (campanha.mestres as string).split(',').map(s => s.trim()).includes(user.nome)
+        : false
+  ));
 
   const salvar = async () => {
     setSaving(true);
@@ -58,12 +84,8 @@ const InformacoesCampanha = () => {
         body.sistema_id = sistemaId;
       }
 
-      const res = await fetch(`http://localhost:3000/campanha/${campanha.id}`, {
+      const res = await apiFetch(`/campanha/${campanha.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
         body: JSON.stringify(body),
       });
       if (!res.ok) {
@@ -91,12 +113,8 @@ const InformacoesCampanha = () => {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:3000/campanha/${campanha.id}`, {
+      const res = await apiFetch(`/campanha/${campanha.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
         body: JSON.stringify({ status: novoStatus }),
       });
       if (!res.ok) {
@@ -124,6 +142,34 @@ const InformacoesCampanha = () => {
   const tagsCount = selectedTags.length;
   const shortDescription = descricao ? (descricao.length > 220 ? descricao.slice(0, 217) + '...' : descricao) : 'Sem descrição disponível.';
   const criadoEm = campanha.criado_em ? new Date(campanha.criado_em).toLocaleDateString() : '—';
+
+  const mestresDisplay = Array.isArray(campanha.mestres) ? campanha.mestres.join(', ') : campanha.mestres;
+
+  const isOnline = (nome: string) => onlineUsers.some(u => u.nome === nome || u.apelido === nome);
+
+  const sortedParticipantes = [...participantes].sort((a, b) => {
+    const aOnline = isOnline(a.nome);
+    const bOnline = isOnline(b.nome);
+    if (aOnline && !bOnline) return -1;
+    if (!aOnline && bOnline) return 1;
+    return 0;
+  });
+
+  // Define promote handler
+  const handlePromote = async (userId: number) => {
+    try {
+      await apiFetch(`/campanhas/${campanha.id}/promover`, {
+        method: 'PATCH',
+        body: JSON.stringify({ userId }),
+      });
+      // refresh participants list
+      const res = await apiFetch(`/campanha/${campanha.id}`);
+      const data = await res.json();
+      setParticipantes(data.campanha.participantes || []);
+    } catch (err) {
+      console.error('Erro ao promover usuário:', err);
+    }
+  };
 
   return (
     <section id="informacoes" className="config-page">
@@ -204,10 +250,36 @@ const InformacoesCampanha = () => {
       )}
 
       <div className="info-secao">
+        <h3>Usuários</h3>
+        <div className="info-item">
+          <div className="info-value">
+            {sortedParticipantes.length > 0 ? (
+              sortedParticipantes.map(p => (
+                <div key={p.id} className="participant-item">
+                  <img src={p.imagem_url || ''} alt="" className="profile-img" />
+                  <div className="participant-details">
+                    <span className="participant-name">{p.nome}</span>
+                    <span className="participant-role">{p.papel}</span>
+                  </div>
+                  <span className={`status-dot ${isOnline(p.nome) ? 'online' : ''}`}></span>
+                  {isOnline(p.nome) && <span className="status-text">Online</span>}
+                  {isMestreOrAdmin && p.papel !== 'mestre' && (
+                    <button className="promote-btn" onClick={() => handlePromote(p.id)}>Promover</button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <span style={{ fontStyle: 'italic', opacity: 0.7 }}>Nenhum usuário</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="info-secao">
         <h3>Detalhes da Campanha</h3>
         <div className="info-item">
-          <div className="info-label">Mestre</div>
-          <div className="info-value">{campanha.mestre || '—'}</div>
+          <div className="info-label">Mestres</div>
+          <div className="info-value">{mestresDisplay || '—'}</div>
         </div>
         <div className="info-item">
           <div className="info-label">Status</div>

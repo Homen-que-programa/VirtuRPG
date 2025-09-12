@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useApi } from "../../services/api";
 import CampaignCard from "./CardCampanha";
 import "./Home.css";
 
 const Home = () => {
   const { accessToken: token } = useAuth();
+  const { apiFetch } = useApi();
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [usuariosCampanha, setUsuariosCampanha] = useState<any[]>([]);
@@ -20,74 +22,21 @@ const Home = () => {
     const fetchData = async () => {
       try {
         // Buscar perfil do usuário
-        const resPerfil = await fetch("http://localhost:3000/perfil", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
+        const resPerfil = await apiFetch("/perfil");
         if (!resPerfil.ok) throw new Error("Erro ao buscar perfil");
         const dataPerfil = await resPerfil.json();
         setUser(dataPerfil.user);
 
-        // Buscar campanhas do usuário
-        const resC = await fetch("http://localhost:3000/campanhas-do-usuario", {
+        // Buscar campanhas do usuário com detalhes (reduz N+1)
+        const resC = await apiFetch("/campanhas-do-usuario-detalhe", {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
           body: JSON.stringify({ id: dataPerfil.user.id }),
         });
 
         if (!resC.ok) throw new Error("Erro ao buscar campanhas");
         const dataC = await resC.json();
-
-        // Buscar usuários de cada campanha
-        const campanhasComUsuarios = await Promise.all(
-          dataC.rows.map(async (campanha: any) => {
-            try {
-              const resU = await fetch("http://localhost:3000/usuarios-da-campanha", {
-                method: "POST",
-                headers: { 
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ id: campanha.id }),
-              });
-
-              if (!resU.ok) return { campanha, usuarios: [] };
-              const dataU = await resU.json();
-
-              // Buscar dados completos de cada usuário
-              const usuarios = await Promise.all(
-                dataU.rows.map(async (uc: any) => {
-                  if (!uc.id) return null;
-                  try {
-                    const resUsuario = await fetch("http://localhost:3000/procurar-usuario", {
-                      method: "POST",
-                      headers: { 
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`
-                      },
-                      body: JSON.stringify({ id: uc.id }),
-                    });
-
-                    if (!resUsuario.ok) return null;
-                    const dataUsuario = await resUsuario.json();
-                    return dataUsuario.usuario || null;
-                  } catch {
-                    return null;
-                  }
-                })
-              );
-
-              return { campanha, usuarios: usuarios.filter(Boolean) };
-            } catch {
-              return { campanha, usuarios: [] };
-            }
-          })
-        );
-
-        setUsuariosCampanha(campanhasComUsuarios);
+        // O backend já retorna campanhas com lista de usuários
+        setUsuariosCampanha(dataC.campanhas);
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
       } finally {

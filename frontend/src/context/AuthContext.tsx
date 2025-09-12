@@ -54,9 +54,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 if (response.ok) {
                   const data = await response.json();
                   sessionStorage.setItem("accessToken", data.accessToken);
-                  sessionStorage.setItem("refreshToken", data.refreshToken);
+                  // mantém o refreshToken atual
+                  if (savedRefreshToken) sessionStorage.setItem("refreshToken", savedRefreshToken);
                   setAccessToken(data.accessToken);
-                  setRefreshToken(data.refreshToken);
+                  setRefreshToken(savedRefreshToken || null);
                   const newDecoded: any = jwtDecode(data.accessToken);
                   setUser({
                     id: newDecoded.id,

@@ -31,7 +31,7 @@ const CardCampanha: React.FC<CardCampanhaProps> = ({ campanha, usuarios, onClick
     >
       <div className="card-header">
         <div className="campaign-name">{campanha.nome}</div>
-        <div className="campaign-mestre">Mestre: {campanha.mestre}</div>
+        <div className="campaign-mestre">Mestres: {campanha.mestres}</div>
       </div>
 
       <div className="card-content">

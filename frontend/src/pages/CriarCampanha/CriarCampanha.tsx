@@ -21,9 +21,7 @@ const CriarCampanha = () => {
       return;
     }
 
-    const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-    const mestre = tokenPayload.nome || tokenPayload.apelido;
-    const usuario_id = tokenPayload.id;
+    // O backend já identifica o usuário pelo token; não precisamos enviar nome/apelido
 
     try {
       const res = await fetch("http://localhost:3000/criar-campanha", {
@@ -32,7 +30,7 @@ const CriarCampanha = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ nome, descricao, mestre, usuario_id }),
+        body: JSON.stringify({ nome, descricao }),
       });
 
       const data = await res.json();
@@ -41,7 +39,7 @@ const CriarCampanha = () => {
         setMensagem("Campanha criada com sucesso!");
         setNome("");
         setDescricao("");
-        navigate(`/campanha/${data.campanhaId}`); // redireciona para a campanha criada
+        navigate(`/campanha/${data.campanhaId}`);
       } else {
         setMensagem(data.message || "Erro ao criar campanha.");
       }

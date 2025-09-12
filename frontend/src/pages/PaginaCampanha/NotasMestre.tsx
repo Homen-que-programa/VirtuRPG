@@ -11,7 +11,7 @@ const NotasMestre = () => {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const isMestre = user && campanha.mestre && user.nome === campanha.mestre;
+  const isMestre = user && campanha.mestres?.includes(user.nome);
 
   useEffect(() => {
     setNotas(campanha.notas || '');

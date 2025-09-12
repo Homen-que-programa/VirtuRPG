@@ -4,9 +4,12 @@ import { Server } from "socket.io";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import { pool } from "./db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import db from './db.js';
+
+// backwards-compatible alias used throughout this file
+const database = db;
 
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -18,11 +21,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const db = pool;
 
 // =================== MIDDLEWARE ===================
 app.use(cors({
-  origin: NODE_ENV === "development" ? "http://localhost:5173" : "*",
+  origin: NODE_ENV === "development" ? "http://localhost:5174" : "*",
   methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
@@ -39,7 +41,7 @@ if (NODE_ENV === "production") {
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: NODE_ENV === "development" ? "http://localhost:5173" : "*",
+    origin: NODE_ENV === "development" ? "http://localhost:5174" : "*",
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
     credentials: true
   }
@@ -83,10 +85,38 @@ io.on("connection", socket => {
     console.log(`Usuário saiu da sala de chat ${salaId}`);
   });
 
+  socket.on("join_campaign", (campaignId) => {
+    socket.join(`campaign_${campaignId}`);
+    console.log(`Usuário ${socket.user.id} entrou na campanha ${campaignId}`);
+    emitOnlineUsers(campaignId);
+  });
+
+  socket.on("leave_campaign", (campaignId) => {
+    socket.leave(`campaign_${campaignId}`);
+    console.log(`Usuário ${socket.user.id} saiu da campanha ${campaignId}`);
+    emitOnlineUsers(campaignId);
+  });
+
   socket.on("disconnect", () => {
     console.log("Cliente desconectado:", socket.id);
+    // Emit to all campaigns the user was in, but since we don't track, perhaps not necessary, or use a map.
+    // For simplicity, skip for now.
   });
 });
+
+function emitOnlineUsers(campaignId) {
+  const room = io.sockets.adapter.rooms.get(`campaign_${campaignId}`);
+  if (room) {
+    const onlineUsers = [];
+    for (const socketId of room) {
+      const socket = io.sockets.sockets.get(socketId);
+      if (socket && socket.user) {
+        onlineUsers.push({ id: socket.user.id, nome: socket.user.nome, apelido: socket.user.apelido });
+      }
+    }
+    io.to(`campaign_${campaignId}`).emit('users_online', { users: onlineUsers });
+  }
+}
 
 // =================== FUNÇÃO MIDDLEWARE PARA ROTAS PRIVADAS ===================
 function authenticateToken(req, res, next) {
@@ -108,7 +138,7 @@ function authenticateToken(req, res, next) {
 // Helper to check if current user has one of allowed roles in a campaign
 async function userHasRoleInCampaign(userId, campanhaId, allowedRoles = ['admin','mestre','dm-assistant']) {
   try {
-    const [rows] = await db.query('SELECT papel FROM usuarios_campanhas WHERE usuario_id = ? AND campanha_id = ?', [userId, campanhaId]);
+    const rows = db.prepare('SELECT papel FROM usuarios_campanhas WHERE usuario_id = ? AND campanha_id = ?').all([userId, campanhaId]);
     if (!rows.length) return false;
     const papel = rows[0].papel;
     return allowedRoles.includes(papel);
@@ -132,7 +162,7 @@ app.get("/notificacoes", async (req, res) => {
     const usuarioId = decoded.id;
     console.log("Usuário logado ID:", usuarioId);
 
-    const [rows] = await db.query(
+    const rows = database.prepare(
       `SELECT 
           n.id,
           n.tipo,
@@ -150,8 +180,7 @@ app.get("/notificacoes", async (req, res) => {
       LEFT JOIN campanhas c ON n.campanha_id = c.id
       WHERE n.usuario_id = ?
       ORDER BY n.criada_em DESC;`,
-      [usuarioId]
-    );
+    ).all([usuarioId]);
 
     console.log("Notificações encontradas:", rows);
     res.json(rows);
@@ -166,7 +195,7 @@ app.get("/notificacoes", async (req, res) => {
 app.patch("/notificacoes/:id/lida", async (req, res) => {
   try {
     const { id } = req.params;
-    await db.query("UPDATE notificacoes SET lida = TRUE WHERE id = ?", [id]);
+    await database.query("UPDATE notificacoes SET lida = TRUE WHERE id = ?", [id]);
     res.json({ message: "Notificação marcada como lida" });
   } catch (err) {
     console.error(err);
@@ -180,10 +209,9 @@ app.post("/criar-notificacoes", async (req, res) => {
     const { usuarioId, tipo, mensagem } = req.body;
     if (!usuarioId || !mensagem) return res.status(400).json({ message: "Campos obrigatórios faltando" });
 
-    await db.query(
+    database.prepare(
       "INSERT INTO notificacoes (usuario_id, tipo, mensagem) VALUES (?, ?, ?)",
-      [usuarioId, tipo || 'geral', mensagem]
-    );
+    ).run([usuarioId, tipo || 'geral', mensagem]);
 
     res.json({ message: "Notificação criada" });
   } catch (err) {
@@ -202,16 +230,15 @@ app.post("/procurar-usuario", async (req, res) => {
   }
 
   try {
-    const [usuarios] = await pool.query(
+    const usuarios = database.prepare(
       "SELECT * FROM usuarios WHERE id = ?",
-      [id]
-    );
+    ).all([id]);
 
     if (usuarios.length === 0) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    res.status(201).json({ message: "Usuario encontrado com sucesso", usuario: usuarios[0] });
+    res.status(200).json({ message: "Usuario encontrado com sucesso", usuario: usuarios[0] });
   } catch (error) {
     console.error("Erro ao procurar usuário:", error);
     res.status(500).json({ error: "Erro ao procurar usuário" });
@@ -221,102 +248,57 @@ app.post("/procurar-usuario", async (req, res) => {
 // Listar campanhas
 app.get('/campanhas', async (req, res) => {
   try {
-    const [rows] = await db.query(
+    const rows = database.prepare(
       `SELECT c.id, c.nome, c.descricao,
-              GROUP_CONCAT(u.nome SEPARATOR ', ') AS mestres
+              GROUP_CONCAT(u.nome) AS mestres
        FROM campanhas c
        LEFT JOIN usuarios_campanhas uc 
          ON c.id = uc.campanha_id AND uc.papel = 'mestre'
        LEFT JOIN usuarios u ON uc.usuario_id = u.id
        GROUP BY c.id`
-    );
+    ).all();
+
     res.json(rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Erro no servidor', error: err.message });
+    console.error('Erro ao listar campanhas:', err);
+    res.status(500).json({ message: 'Erro no servidor' });
   }
 });
 
 // Entrar em uma campanha
-app.post('/campanhas/:id/entrar', async (req, res) => {
+app.post("/campanhas/:id/entrar", async (req, res) => {
   try {
     const campanhaId = Number(req.params.id);
     const { usuarioId, mensagem } = req.body;
 
-    if (!usuarioId) return res.status(400).json({ error: "usuarioId é obrigatório" });
-    if (!mensagem || mensagem.trim() === "") return res.status(400).json({ error: "Mensagem obrigatória" });
+    if (!usuarioId) return res.status(400).json({ message: "usuarioId é obrigatório" });
 
-    // Inserir pedido na tabela de pedidos
-    await db.query(
-      "INSERT INTO pedidos_campanha (campanha_id, usuario_id) VALUES (?, ?)",
-      [campanhaId, usuarioId]
-    );
+    // Verificar se a campanha existe
+    const campanhaRows = database.prepare("SELECT id FROM campanhas WHERE id = ?").all([campanhaId]);
+    if (!campanhaRows.length) return res.status(404).json({ message: "Campanha não encontrada" });
 
-    // Buscar dados do usuário que fez o pedido
-    const [usuarioRows] = await db.query(
-      "SELECT nome, apelido FROM usuarios WHERE id = ?",
-      [usuarioId]
-    );
+    // Verificar se o usuário já está na campanha
+    const existing = database.prepare("SELECT id FROM usuarios_campanhas WHERE usuario_id = ? AND campanha_id = ?").all([usuarioId, campanhaId]);
+    if (existing.length > 0) return res.status(400).json({ message: "Usuário já está na campanha" });
 
-    if (!usuarioRows.length)
-      return res.status(404).json({ error: "Usuário não encontrado" });
+    // Adicionar o usuário à campanha
+    database.prepare("INSERT INTO usuarios_campanhas (usuario_id, campanha_id, papel) VALUES (?, ?, ?)").run([usuarioId, campanhaId, 'jogador']);
 
-    const usuario = usuarioRows[0];
+    // Criar notificação para os mestres
+    const mestres = database.prepare(
+      "SELECT usuario_id FROM usuarios_campanhas WHERE campanha_id = ? AND papel = 'mestre'",
+    ).all([campanhaId]);
 
-    // Buscar todos os mestres da campanha
-    const [mestresRows] = await db.query(
-      `SELECT usuario_id FROM usuarios_campanhas 
-       WHERE campanha_id = ? AND papel = 'mestre'`,
-      [campanhaId]
-    );
-
-    if (!mestresRows.length)
-      return res.status(404).json({ error: "Nenhum mestre encontrado para esta campanha" });
-
-    // Buscar dados da campanha
-    const [campanhaRows] = await db.query(
-      "SELECT nome FROM campanhas WHERE id = ?",
-      [campanhaId]
-    );
-
-    if (!campanhaRows.length)
-      return res.status(404).json({ error: "Campanha não encontrada" });
-
-    // Criar notificação para cada mestre
-    for (const mestre of mestresRows) {
-      const [notifResult] = await db.query(
-        "INSERT INTO notificacoes (usuario_id, usuario_id_referencia, campanha_id, tipo, mensagem) VALUES (?, ?, ?, 'pedido', ?)",
-        [mestre.usuario_id, usuarioId, campanhaId, mensagem]
-      );
-
-      const notifId = notifResult.insertId;
-
-      // Buscar a notificação recém-criada já com os dados necessários
-      const [notificacaoRows] = await db.query(
-        `SELECT n.id, n.tipo, n.mensagem, n.lida, n.criada_em,
-            u.id AS usuarioId, u.nome AS usuarioNome, u.apelido AS usuarioApelido,
-            c.id AS campanhaId, c.nome AS campanhaNome,
-            n.usuario_id AS usuarioIdDestino,
-            n.usuario_id_referencia AS usuarioIdReferencia
-        FROM notificacoes n
-        LEFT JOIN usuarios u ON u.id = n.usuario_id_referencia
-        LEFT JOIN campanhas c ON c.id = n.campanha_id
-        WHERE n.id = ?`,
-        [notifId]
-      );
-
-      const novaNotificacao = notificacaoRows[0];
-
-      if (req.io) {
-        req.io.to(`user_${mestre.usuario_id}`).emit('novaNotificacao', novaNotificacao);
-      }
+    for (const mestre of mestres) {
+      database.prepare(
+        "INSERT INTO notificacoes (usuario_id, tipo, mensagem, usuario_id_referencia, campanha_id) VALUES (?, ?, ?, ?, ?)",
+      ).run([mestre.usuario_id, 'pedido_entrada', `Usuário ${usuarioId} quer entrar na campanha. Mensagem: ${mensagem || 'Nenhuma'}`, usuarioId, campanhaId]);
     }
 
-    res.json({ success: true, message: "Pedido enviado aos mestres com sucesso" });
-
+    res.json({ message: "Pedido enviado com sucesso" });
   } catch (err) {
-    console.error("Erro /campanhas/:id/entrar:", err);
-    res.status(500).json({ error: err.sqlMessage || err.message });
+    console.error(err);
+    res.status(500).json({ message: "Erro no servidor", error: err.message });
   }
 });
 
@@ -329,42 +311,37 @@ app.post('/campanhas/:id/aceitar-pedido', async (req, res) => {
     if (!usuarioId) return res.status(400).json({ error: "usuarioId é obrigatório" });
 
     // Atualizar pedido
-    const [result] = await db.query(
-      "UPDATE pedidos_campanha SET status = 'aceito' WHERE campanha_id = ? AND usuario_id = ?",
-      [campanhaId, usuarioId]
-    );
+    const updateResult = db.prepare(
+      "UPDATE pedidos_campanha SET status = 'aceito' WHERE campanha_id = ? AND usuario_id = ?"
+    ).run([campanhaId, usuarioId]);
 
-    if (result.affectedRows === 0)
+    if (updateResult.changes === 0)
       return res.status(404).json({ error: "Pedido não encontrado" });
 
     // Adicionar usuário à campanha
-    await db.query(
-      "INSERT INTO usuarios_campanhas (usuario_id, campanha_id, papel) VALUES (?, ?, 'jogador')",
-      [usuarioId, campanhaId]
-    );
+    db.prepare(
+      "INSERT INTO usuarios_campanhas (usuario_id, campanha_id, papel) VALUES (?, ?, 'jogador')"
+    ).run([usuarioId, campanhaId]);
 
     // Buscar dados do usuário e campanha
-    const [usuarioRows] = await db.query(
-      "SELECT nome, apelido FROM usuarios WHERE id = ?",
-      [usuarioId]
-    );
-    const [campanhaRows] = await db.query(
-      "SELECT nome FROM campanhas WHERE id = ?",
-      [campanhaId]
-    );
+    const usuarioRows = db.prepare(
+      "SELECT nome, apelido FROM usuarios WHERE id = ?"
+    ).all([usuarioId]);
+    const campanhaRows = db.prepare(
+      "SELECT nome FROM campanhas WHERE id = ?"
+    ).all([campanhaId]);
 
     const usuario = usuarioRows[0];
     const campanha = campanhaRows[0];
 
     const mensagemNotificacao = `Seu pedido para entrar na campanha foi aceito.`;
 
-    const [notifResult] = await db.query(
-      "INSERT INTO notificacoes (usuario_id, usuario_id_referencia, campanha_id, tipo, mensagem) VALUES (?, ?, ?, 'pedido_aceito', ?)",
-      [usuarioId, null, campanhaId, mensagemNotificacao]
-    );
+    const notifResult = db.prepare(
+      "INSERT INTO notificacoes (usuario_id, usuario_id_referencia, campanha_id, tipo, mensagem) VALUES (?, ?, ?, 'pedido_aceito', ?)"
+    ).run([usuarioId, null, campanhaId, mensagemNotificacao]);
 
     const novaNotificacao = {
-      id: notifResult.insertId,
+      id: notifResult.lastInsertRowid,
       usuarioId,
       usuarioReferenciaId: null,
       campanhaId,
@@ -392,29 +369,31 @@ app.get("/campanha/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [campanhaRows] = await db.query(
-      "SELECT * FROM campanhas WHERE id = ?",
-      [id]
-    );
+    const campanhaRows = database.prepare("SELECT * FROM campanhas WHERE id = ?").all([id]);
 
     if (campanhaRows.length === 0)
       return res.status(404).json({ message: "Campanha não encontrada" });
 
     const campanha = campanhaRows[0];
 
-    const [jogadoresRows] = await db.query(
-      `SELECT u.nome
+    const participantesRows = database.prepare(
+      `SELECT u.id, u.nome, u.apelido, u.imagem_url, uc.papel
        FROM usuarios u
        JOIN usuarios_campanhas uc ON u.id = uc.usuario_id
        WHERE uc.campanha_id = ?`,
-      [id]
-    );
+    ).all([id]);
+    
+    campanha.participantes = participantesRows.map(u => ({
+      id: u.id,
+      nome: u.nome,
+      apelido: u.apelido,
+      papel: u.papel,
+      imagem_url: u.imagem_url
+    }));
 
-    campanha.jogadores = jogadoresRows.map(u => u.nome);
-
-    res.status(200).json({ campanha });
+    res.json({ campanha });
   } catch (err) {
-    console.error("Erro ao buscar campanha:", err);
+    console.error(err);
     res.status(500).json({ message: "Erro no servidor", error: err.message });
   }
 });
@@ -426,7 +405,7 @@ app.patch('/campanha/:id', authenticateToken, async (req, res) => {
   const { notas, tags, sistema, status, imagem_url, nome, descricao, sistema_id } = req.body;
 
   // Basic check: campanha exists
-    const [rows] = await db.query('SELECT id FROM campanhas WHERE id = ?', [id]);
+    const rows = database.prepare('SELECT id FROM campanhas WHERE id = ?').all([id]);
     if (!rows.length) return res.status(404).json({ message: 'Campanha não encontrada' });
 
   // Authorization: only users with roles admin/mestre/dm-assistant can update metadata
@@ -445,14 +424,14 @@ app.patch('/campanha/:id', authenticateToken, async (req, res) => {
   if (status !== undefined) { updates.push('status = ?'); values.push(status); }
   if (imagem_url !== undefined) { updates.push('imagem_url = ?'); values.push(imagem_url); }
 
-    if (updates.length === 0) return res.status(400).json({ message: 'Nada para atualizar' });
+  if (updates.length === 0) return res.status(400).json({ message: 'Nada para atualizar' });
 
     const sql = `UPDATE campanhas SET ${updates.join(', ')} WHERE id = ?`;
     values.push(id);
 
-    await db.query(sql, values);
+    database.prepare(sql).run(values);
 
-    const [updatedRows] = await db.query('SELECT * FROM campanhas WHERE id = ?', [id]);
+    const updatedRows = database.prepare('SELECT * FROM campanhas WHERE id = ?').all([id]);
     res.json({ campanha: updatedRows[0] });
   } catch (err) {
     console.error('Erro ao atualizar campanha:', err);
@@ -460,85 +439,33 @@ app.patch('/campanha/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Listar sistemas disponíveis
-app.get('/sistemas', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT id, nome, descricao FROM sistemas ORDER BY nome');
-    res.json({ sistemas: rows });
-  } catch (err) {
-    console.error('Erro ao listar sistemas:', err);
-    res.status(500).json({ message: 'Erro no servidor' });
-  }
-});
-
-// Atualizar próxima sessão estruturada de uma campanha
-app.patch('/campanha/:id/next-session', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { datetime, local, link } = req.body;
-
-  const [rows] = await db.query('SELECT id FROM campanhas WHERE id = ?', [id]);
-    if (!rows.length) return res.status(404).json({ message: 'Campanha não encontrada' });
-
-  // Authorization: only admin/mestre/dm-assistant can set next session
-  const allowed2 = await userHasRoleInCampaign(req.user.id, id);
-  if (!allowed2) return res.status(403).json({ message: 'Permissão negada' });
-
-    await db.query('UPDATE campanhas SET next_session_datetime = ?, next_session_local = ?, next_session_link = ? WHERE id = ?', [datetime || null, local || null, link || null, id]);
-
-    const [updated] = await db.query('SELECT * FROM campanhas WHERE id = ?', [id]);
-    res.json({ campanha: updated[0] });
-  } catch (err) {
-    console.error('Erro ao atualizar next-session:', err);
-    res.status(500).json({ message: 'Erro no servidor' });
-  }
-});
-
 // Criar campanha
-app.post("/criar-campanha", async (req, res) => {
+app.post("/criar-campanha", authenticateToken, async (req, res) => {
   try {
-    const { nome, descricao, mestre, usuario_id } = req.body;
-    if (!nome || !descricao || !mestre || !usuario_id) {
-      return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+    const { nome, descricao, mestres } = req.body;
+    if (!nome || !descricao) {
+      return res.status(400).json({ message: "Nome e descrição são obrigatórios" });
+    }
+    const requesterId = Number(req.user.id);
+    const mestresIds = Array.isArray(mestres) ? mestres.map(Number).filter(Boolean) : [];
+    const allMestres = [...new Set([requesterId, ...mestresIds])];
+
+    // Get the name of the first mestre (creator)
+    const mestreRow = database.prepare('SELECT nome FROM usuarios WHERE id = ?').all([requesterId]);
+    const mestreNome = mestreRow[0].nome;
+
+    // Insert campaign
+    const result = database.prepare('INSERT INTO campanhas (nome, mestre, descricao) VALUES (?, ?, ?)').run([nome, mestreNome, descricao]);
+    const campanhaId = result.lastInsertRowid;
+
+    // Insert mestres
+    for (const mestreId of allMestres) {
+      database.prepare('INSERT INTO usuarios_campanhas (usuario_id, campanha_id, papel) VALUES (?, ?, ?)').run([mestreId, campanhaId, 'mestre']);
     }
 
-    const [result] = await db.query(
-      "INSERT INTO campanhas (nome, mestre, descricao) VALUES (?, ?, ?)",
-      [nome, mestre, descricao]
-    );
-
-    if (!result.insertId) return res.status(500).json({ message: "Erro ao criar campanha" });
-
-    await db.query(
-      "INSERT INTO usuarios_campanhas (usuario_id, campanha_id, papel) VALUES (?, ?, 'mestre')",
-      [usuario_id, result.insertId]
-    );
-
-    res.status(201).json({
-      message: "Campanha criada com sucesso",
-      campanhaId: result.insertId
-    });
-  } catch (err) {
-    console.error("Erro ao criar campanha:", err);
-    res.status(500).json({ message: "Erro no servidor", error: err.message });
-  }
-});
-
-// Listar campanhas de um usuário
-app.post("/campanhas-do-usuario", async (req, res) => {
-  try {
-    const { id } = req.body;
-    if (!id) return res.status(400).json({ message: "id não recebido" });
-
-    const [rows] = await db.query(
-      `SELECT c.* 
-       FROM campanhas c
-       JOIN usuarios_campanhas uc ON c.id = uc.campanha_id
-       WHERE uc.usuario_id = ?`,
-      [id]
-    );
-
-    res.status(200).json({ message: "sucesso na busca", rows });
+    // Return the campaign
+    const campanhaRows = database.prepare('SELECT * FROM campanhas WHERE id = ?').all([campanhaId]);
+    res.status(201).json({ campanhaId, campanha: campanhaRows[0] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erro no servidor", error: err.message });
@@ -551,18 +478,111 @@ app.post("/usuarios-da-campanha", async (req, res) => {
     const { id } = req.body;
     if (!id) return res.status(400).json({ message: "id não recebido" });
 
-    const [rows] = await db.query(
+    const rows = database.prepare(
       `SELECT u.id, u.nome, u.apelido, u.email
        FROM usuarios u
        JOIN usuarios_campanhas uc ON u.id = uc.usuario_id
        WHERE uc.campanha_id = ?`,
-      [id]
-    );
+    ).all([id]);
 
     res.status(200).json({ message: "sucesso na busca", rows });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erro no servidor", error: err.message });
+  }
+});
+
+// Listar campanhas do usuário
+app.post("/campanhas-do-usuario", async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: "id não recebido" });
+
+    const rows = database.prepare(
+      `SELECT c.* 
+       FROM campanhas c
+       JOIN usuarios_campanhas uc ON c.id = uc.campanha_id
+       WHERE uc.usuario_id = ?`,
+    ).all([id]);
+
+    res.status(200).json({ message: "sucesso na busca", rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erro no servidor", error: err.message });
+  }
+});
+
+// Campanhas do usuário com detalhes (participantes incluídos) – reduz chamadas N+1
+app.post("/campanhas-do-usuario-detalhe", authenticateToken, async (req, res) => {
+  try {
+    const bodyId = Number(req.body?.id);
+    const requesterId = Number(req.user.id);
+    const userId = bodyId || requesterId;
+    if (!userId) return res.status(400).json({ message: "id não recebido" });
+
+    // Buscar campanhas do usuário
+    const campanhasRows = database.prepare(
+      `SELECT c.id, c.nome, c.descricao
+       FROM campanhas c
+       JOIN usuarios_campanhas uc ON c.id = uc.campanha_id
+       WHERE uc.usuario_id = ?`,
+    ).all([userId]);
+
+    if (!campanhasRows.length) return res.json({ campanhas: [] });
+
+    const campanhaIds = campanhasRows.map(c => c.id);
+    const placeholders = campanhaIds.map(() => '?').join(',');
+
+    // Buscar participantes de todas as campanhas em uma consulta
+    const participantesRows = database.prepare(
+      `SELECT uc.campanha_id, u.id, u.nome, u.apelido, u.email, u.imagem_url, uc.papel
+       FROM usuarios u
+       JOIN usuarios_campanhas uc ON u.id = uc.usuario_id
+       WHERE uc.campanha_id IN (${placeholders})`,
+    ).all(campanhaIds);
+
+    const byCampanha = new Map();
+    for (const c of campanhasRows) {
+      byCampanha.set(c.id, { campanha: { ...c, mestres: '' }, usuarios: [] });
+    }
+
+    for (const row of participantesRows) {
+      const entry = byCampanha.get(row.campanha_id);
+      if (!entry) continue;
+      entry.usuarios.push({ id: row.id, nome: row.nome, apelido: row.apelido, email: row.email, imagem_url: row.imagem_url, papel: row.papel });
+    }
+
+    // calcular string de mestres por campanha
+    for (const entry of byCampanha.values()) {
+      const mestres = entry.usuarios.filter((u) => u.papel === 'mestre').map((u) => u.nome);
+      entry.campanha.mestres = mestres.join(', ');
+    }
+
+    res.json({ campanhas: Array.from(byCampanha.values()) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erro no servidor", error: err.message });
+  }
+});
+
+// Promover participante a mestre
+app.patch('/campanhas/:id/promover', authenticateToken, async (req, res) => {
+  try {
+    const campanhaId = Number(req.params.id);
+    const { userId } = req.body;
+    if (!campanhaId || !userId) return res.status(400).json({ message: 'Parâmetros inválidos' });
+
+    const allowed = await userHasRoleInCampaign(req.user.id, campanhaId, ['admin','mestre']);
+    if (!allowed) return res.status(403).json({ message: 'Permissão negada' });
+
+    const exists = database.prepare('SELECT 1 FROM usuarios_campanhas WHERE usuario_id = ? AND campanha_id = ?').all([userId, campanhaId]);
+    if (!exists.length) return res.status(404).json({ message: 'Usuário não participa da campanha' });
+
+    database.prepare('UPDATE usuarios_campanhas SET papel = ? WHERE usuario_id = ? AND campanha_id = ?').run(['mestre', userId, campanhaId]);
+    res.json({ message: 'Usuário promovido a mestre' });
+  } catch (err) {
+    console.error('Erro ao promover usuário:', err);
+    res.status(500).json({ message: 'Erro no servidor', error: err.message });
   }
 });
 
@@ -572,7 +592,7 @@ app.post("/usuarios-da-campanha", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
-    const [rows] = await db.query("SELECT * FROM usuarios WHERE email = ?", [email]);
+    const rows = database.prepare("SELECT * FROM usuarios WHERE email = ?").all([email]);
     const user = rows[0];
     if (!user) return res.status(401).json({ message: "Usuário não encontrado" });
 
@@ -586,7 +606,7 @@ app.post("/login", async (req, res) => {
     );
     const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: "7d" });
 
-    await db.query("UPDATE usuarios SET refresh_token = ? WHERE id = ?", [refreshToken, user.id]);
+    database.prepare("UPDATE usuarios SET refresh_token = ? WHERE id = ?").run([refreshToken, user.id]);
 
     res.json({ accessToken, refreshToken, user: { id: user.id, email: user.email, nome: user.nome, apelido: user.apelido } });
   } catch (err) {
@@ -601,7 +621,7 @@ app.post("/logout", async (req, res) => {
     const { refreshToken } = req.body;
     if (!refreshToken) return res.status(400).json({ message: "Token não informado" });
 
-    await db.query("UPDATE usuarios SET refresh_token = NULL WHERE refresh_token = ?", [refreshToken]);
+    database.prepare("UPDATE usuarios SET refresh_token = NULL WHERE refresh_token = ?").run([refreshToken]);
     res.json({ message: "Logout realizado com sucesso" });
   } catch (err) {
     console.error(err);
@@ -615,7 +635,7 @@ app.post("/refresh-token", async (req, res) => {
     const { refreshToken } = req.body;
     if (!refreshToken) return res.status(401).json({ message: "Refresh token não fornecido" });
 
-    const [rows] = await db.query("SELECT * FROM usuarios WHERE refresh_token = ?", [refreshToken]);
+    const rows = database.prepare("SELECT * FROM usuarios WHERE refresh_token = ?").all([refreshToken]);
     const user = rows[0];
     if (!user) return res.status(403).json({ message: "Refresh token inválido" });
 
@@ -643,18 +663,18 @@ app.post("/cadastro", async (req, res) => {
       return res.status(400).json({ message: "Todos os campos são obrigatórios" });
     }
 
-    const [existingRows] = await db.query("SELECT id FROM usuarios WHERE email = ? OR nome = ?", [email, nome]);
+    const existingRows = database.prepare("SELECT id FROM usuarios WHERE email = ? OR nome = ?").all([email, nome]);
     if (existingRows.length > 0) return res.status(400).json({ message: "Nome ou email já cadastrado" });
 
     const hashedPassword = await bcrypt.hash(senha, 10);
-    const [result] = await db.query("INSERT INTO usuarios (nome, apelido, email, senha) VALUES (?, ?, ?, ?)", [nome, apelido, email, hashedPassword]);
+    const result = database.prepare("INSERT INTO usuarios (nome, apelido, email, senha) VALUES (?, ?, ?, ?)").run([nome, apelido, email, hashedPassword]);
 
-    const userId = result.insertId;
+    const userId = result.lastInsertRowid;
 
     const accessToken = jwt.sign({ id: userId, nome, apelido, email }, SECRET, { expiresIn: "1h" });
     const refreshToken = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET || "refresh_secret", { expiresIn: "7d" });
 
-    await db.query("UPDATE usuarios SET refresh_token = ? WHERE id = ?", [refreshToken, userId]);
+    database.prepare("UPDATE usuarios SET refresh_token = ? WHERE id = ?").run([refreshToken, userId]);
 
     res.status(201).json({ message: "Cadastro realizado com sucesso", accessToken, refreshToken });
   } catch (err) {
@@ -674,8 +694,8 @@ app.delete("/deletar-conta", async (req, res) => {
     const userId = Number(decoded?.id);
     if (!userId) return res.status(400).json({ message: "ID do usuário não encontrado no token" });
 
-    const [result] = await db.query("DELETE FROM usuarios WHERE id = ?", [userId]);
-    if (result.affectedRows > 0) res.json({ message: "Conta deletada com sucesso" });
+    const result = database.prepare("DELETE FROM usuarios WHERE id = ?").run([userId]);
+    if (result.changes > 0) res.json({ message: "Conta deletada com sucesso" });
     else res.status(404).json({ message: "Usuário não encontrado" });
   } catch (err) {
     console.error(err);
@@ -705,12 +725,11 @@ app.post("/campanhas/:id/salas", async (req, res) => {
 
     if (!nome || !usuarioId) return res.status(400).json({ message: "Nome da sala e usuarioId são obrigatórios" });
 
-    const [result] = await db.query(
+    const result = database.prepare(
       "INSERT INTO salas_chat (campanha_id, nome, criado_por) VALUES (?, ?, ?)",
-      [campanhaId, nome, usuarioId]
-    );
+    ).run([campanhaId, nome, usuarioId]);
 
-    res.status(201).json({ message: "Sala criada", salaId: result.insertId });
+    res.status(201).json({ message: "Sala criada", salaId: result.lastInsertRowid });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erro no servidor", error: err.message });
@@ -722,12 +741,11 @@ app.get("/campanhas/:id/salas", async (req, res) => {
   try {
     const campanhaId = Number(req.params.id);
 
-    const [rows] = await db.query(
-      "SELECT * FROM salas_chat WHERE campanha_id = ? ORDER BY criada_em DESC",
-      [campanhaId]
-    );
+    const rows = database.prepare(
+      "SELECT id, nome, criado_por, criado_em FROM salas_chat WHERE campanha_id = ? ORDER BY criado_em",
+    ).all([campanhaId]);
 
-    res.json(rows);
+    res.json({ salas: rows });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erro no servidor", error: err.message });
@@ -742,13 +760,13 @@ app.post("/salas/:id/mensagens", async (req, res) => {
 
     if (!mensagem || !usuarioId) return res.status(400).json({ message: "Mensagem e usuarioId são obrigatórios" });
 
-    const [result] = await db.query(
+    const [result] = await database.query(
       "INSERT INTO mensagens_chat (sala_id, usuario_id, mensagem) VALUES (?, ?, ?)",
       [salaId, usuarioId, mensagem]
     );
 
     // Buscar a mensagem com dados do usuário
-    const [msgRows] = await db.query(
+    const [msgRows] = await database.query(
       `SELECT m.*, u.nome, u.apelido FROM mensagens_chat m
        JOIN usuarios u ON m.usuario_id = u.id
        WHERE m.id = ?`,
@@ -774,7 +792,7 @@ app.get("/salas/:id/mensagens", async (req, res) => {
   try {
     const salaId = Number(req.params.id);
 
-    const [rows] = await db.query(
+    const [rows] = await database.query(
       `SELECT m.*, u.nome, u.apelido FROM mensagens_chat m
        JOIN usuarios u ON m.usuario_id = u.id
        WHERE m.sala_id = ?

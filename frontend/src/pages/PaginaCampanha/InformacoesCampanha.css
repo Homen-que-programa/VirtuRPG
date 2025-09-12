@@ -207,6 +207,11 @@
   font-weight: 500;
 }
 
+.tag-badge.online {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  border-color: #2ecc71;
+}
+
 .tag-badge:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(255, 209, 102, 0.3);
@@ -618,4 +623,90 @@
   height: 16px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+/* Participants list styling */
+.participant-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background-color: var(--nav-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: default;
+  transition: background-color 0.2s ease;
+}
+.participant-item:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.profile-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-yellow);
+}
+
+.participant-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.participant-name {
+  font-weight: 600;
+  color: var(--title-color);
+}
+
+.participant-role {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: gray;
+}
+
+.status-dot.online {
+  background: #2ecc71;
+}
+
+.status-text {
+  font-size: 0.8rem;
+  color: #2ecc71;
+}
+
+/* Promote button for masters */
+.promote-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  background-color: var(--accent-yellow);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.promote-btn:hover {
+  background-color: var(--btn-hover);
+}
+
+.user-label {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: var(--title-color);
+}
+
+.user-label.online {
+  background: rgba(0, 255, 0, 0.2);
+  border: 1px solid green;
 }

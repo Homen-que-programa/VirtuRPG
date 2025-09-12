@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from "../../context/AuthContext";
+import { useApi } from "../../services/api";
 import './Campanhas.css';
 
 interface Campanha {
     id: number;
     nome: string;
     descricao: string;
-    mestre: string;
+    mestres: string;
 }
 
 const Campanhas = () => {
@@ -17,15 +18,12 @@ const Campanhas = () => {
     const [sendingId, setSendingId] = useState<number | null>(null);
     const [mensagens, setMensagens] = useState<{ [key: number]: string }>({});
 
+    const { apiFetch } = useApi();
     useEffect(() => {
         const fetchCampanhas = async () => {
             setLoading(true);
             try {
-                const res = await fetch('http://localhost:3000/campanhas', {
-                    headers: {
-                        Authorization: accessToken ? `Bearer ${accessToken}` : "",
-                    },
-                });
+                const res = await apiFetch('/campanhas');
 
                 if (!res.ok) throw new Error(`Erro ao buscar campanhas: ${res.statusText}`);
                 const data = await res.json();
@@ -53,12 +51,8 @@ const Campanhas = () => {
         try {
             setSendingId(campanhaId);
 
-            const res = await fetch(`http://localhost:3000/campanhas/${campanhaId}/entrar`, {
+            const res = await apiFetch(`/campanhas/${campanhaId}/entrar`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
                 body: JSON.stringify({ usuarioId, mensagem }),
             });
 
@@ -92,7 +86,7 @@ const Campanhas = () => {
                         <li key={c.id} className="campanha-card">
                             <h3>{c.nome}</h3>
                             <p>{c.descricao}</p>
-                            <p>Mestre: {c.mestre}</p>
+                            <p>Mestres: {c.mestres}</p>
 
                             <textarea
                                 placeholder="Escreva uma mensagem ao mestre..."

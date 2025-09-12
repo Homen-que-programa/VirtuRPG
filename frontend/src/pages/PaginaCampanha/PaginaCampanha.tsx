@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useApi } from "../../services/api";
 import SidebarCampanha from "./SidebarCampanha";
 import type { Campanha } from "../../types";
 import "./PaginaCampanha.css";
@@ -13,13 +14,14 @@ const PaginaCampanha = () => {
   const [campanha, setCampanha] = useState<Campanha>({
     id: 0,
     nome: '',
-    mestre: '',
+    mestres: [], // Changed from mestre to mestres
     descricao: '',
     jogadores: [],
   });
   const [mensagem, setMensagem] = useState("");
   const { accessToken, loading } = useAuth();
 
+  const { apiFetch } = useApi();
   useEffect(() => {
     if (loading) return; // Aguarda carregar tokens do sessionStorage
     if (!accessToken) {
@@ -29,9 +31,7 @@ const PaginaCampanha = () => {
 
     const fetchCampanha = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/campanha/${id}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+        const res = await apiFetch(`/campanha/${id}`);
         const data = await res.json();
 
         if (res.ok) {

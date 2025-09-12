@@ -13,8 +13,9 @@ export interface Campanha {
   id?: number;
   nome?: string;
   descricao?: string;
-  mestre?: string;
+  mestres?: string | string[]; // string for list, array for individual
   jogadores?: string[];
+  participantes?: Array<{ id: number; nome: string; apelido?: string; papel: string; imagem_url?: string }>;
   criado_em?: string;
   tags?: string | null; // comma separated or JSON
   sistema?: string | null;
